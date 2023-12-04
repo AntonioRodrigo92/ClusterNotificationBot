@@ -23,7 +23,7 @@ public class ClusterNotificationBot {
 
         MosquittoInstance mosquittoInstance = null;
         CyclicBarrier barrier = new CyclicBarrier(2);
-        System.out.println("BARREIRA CRIADA");
+//        System.out.println("BARREIRA CRIADA");
         try {
             mosquittoInstance = new MosquittoInstance(
                 data.get("mosquitto.broker").toString(),
@@ -33,9 +33,9 @@ public class ClusterNotificationBot {
         "ClusterNotificationBot",
                 barrier
             );
-            System.out.println("INSTANCIA MOSQUITTO CRIADA");
+//            System.out.println("INSTANCIA MOSQUITTO CRIADA");
             mosquittoInstance.startWaitForMessage();
-            System.out.println("JÁ ESTÁ A ESCUTAR");
+//            System.out.println("JÁ ESTÁ A ESCUTAR");
 
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(new TelegramBotNotifiers(propertiesPath, mosquittoInstance, barrier));

@@ -26,7 +26,7 @@ public class MosquittoInstance {
         message.setQos(qos);
         client.publish(topic, message);
 
-        System.out.println("sent message to " + topic + ": " + message);
+//        System.out.println("sent message to " + topic + ": " + message);
     }
 
 

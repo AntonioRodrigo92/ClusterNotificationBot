@@ -32,19 +32,19 @@ public class TelegramBotNotifiers extends TelegramLongPollingBot {
         this.botToken = data.get("botToken").toString();
         this.commandPairing = new HashMap<>();
         this.request_topic = data.get("mosquitto.topic_req").toString();
-        System.out.println("CONSTRUTOR TELEGRAM");
+//        System.out.println("CONSTRUTOR TELEGRAM");
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        System.out.println("ON UPDATE RECEIVED");
+//        System.out.println("ON UPDATE RECEIVED");
         SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
         message.setChatId(update.getMessage().getChatId().toString());
         String command = update.getMessage().getText();
 
         try {
             String response = queryMasterForData(command);
-            System.out.println("FARTO DISTO!!! " + response);
+//            System.out.println("FARTO DISTO!!! " + response);
             message.setText(response);
             execute(message);
         } catch (IOException e) {
