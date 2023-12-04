@@ -25,6 +25,12 @@
             <artifactId>snakeyaml</artifactId>
             <version>2.2</version>
         </dependency>
+        <!-- MOSQUITTO -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.5</version>
+        </dependency>
     </dependencies>
 
     <build>

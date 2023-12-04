@@ -1,3 +1,4 @@
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -9,32 +10,41 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 public class TelegramBotNotifiers extends TelegramLongPollingBot {
     private String propertiesPath;
+    private MosquittoInstance mosquittoInstance;
+    private CyclicBarrier barrier;
     private String botUsername;
     private String botToken;
-    private String scriptPath;
+    private String request_topic;
     private Map<String, String> commandPairing;
 
 
-    public TelegramBotNotifiers(String propertiesPath) throws FileNotFoundException {
+    public TelegramBotNotifiers(String propertiesPath, MosquittoInstance mosquittoInstance, CyclicBarrier barrier) throws FileNotFoundException {
         this.propertiesPath = propertiesPath;
+        this.mosquittoInstance = mosquittoInstance;
+        this.barrier = barrier;
         Map<String, Object> data = getProperties();
         this.botUsername = data.get("botUsername").toString();
         this.botToken = data.get("botToken").toString();
-        this.scriptPath = data.get("scriptPath").toString();
         this.commandPairing = new HashMap<>();
+        this.request_topic = data.get("mosquitto.topic_req").toString();
+        System.out.println("CONSTRUTOR TELEGRAM");
     }
 
     @Override
     public void onUpdateReceived(Update update) {
+        System.out.println("ON UPDATE RECEIVED");
         SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
         message.setChatId(update.getMessage().getChatId().toString());
         String command = update.getMessage().getText();
 
         try {
-            String response = runCommand(command);
+            String response = queryMasterForData(command);
+            System.out.println("FARTO DISTO!!! " + response);
             message.setText(response);
             execute(message);
         } catch (IOException e) {
@@ -42,6 +52,10 @@ public class TelegramBotNotifiers extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (BrokenBarrierException e) {
+            e.printStackTrace();
+        } catch (MqttException e) {
             e.printStackTrace();
         }
     }
@@ -57,7 +71,7 @@ public class TelegramBotNotifiers extends TelegramLongPollingBot {
         return botToken;
     }
 
-    private String runCommand(String command) throws IOException, InterruptedException {
+    private String queryMasterForData(String command) throws FileNotFoundException, MqttException, BrokenBarrierException, InterruptedException {
         updateCommandsProperties();
         Set<String> allowedCommands = this.commandPairing.keySet();
 
@@ -67,20 +81,12 @@ public class TelegramBotNotifiers extends TelegramLongPollingBot {
 
         if(allowedCommands.contains(command)) {
             String execCommand = commandPairing.get(command);
-            Runtime rt = Runtime.getRuntime();
-            String[] commands = {scriptPath, execCommand};
-            Process proc = rt.exec(commands);
-            proc.waitFor();
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            mosquittoInstance.sendMessage(request_topic, execCommand, 2);
+            barrier.await();
+            String msg = mosquittoInstance.getResponse();
+            barrier.reset();
 
-            StringBuilder response = new StringBuilder();
-            String line = null;
-            while ((line = stdInput.readLine()) != null) {
-                response.append(line);
-                response.append("\n");
-            }
-            stdInput.close();
-            return response.toString();
+            return msg;
         }
         else {
             return "Command not found!";
