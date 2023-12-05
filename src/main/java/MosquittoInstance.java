@@ -25,8 +25,6 @@ public class MosquittoInstance {
         MqttMessage message = new MqttMessage(content.getBytes());
         message.setQos(qos);
         client.publish(topic, message);
-
-//        System.out.println("sent message to " + topic + ": " + message);
     }
 
 
