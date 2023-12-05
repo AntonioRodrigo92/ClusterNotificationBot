@@ -15,15 +15,13 @@ import java.util.concurrent.CyclicBarrier;
 public class ClusterNotificationBot {
 
     public static void main(String[] args) throws MqttException, FileNotFoundException {
-//        String propertiesPath = args[0];
-        String propertiesPath = "C:\\Users\\Antonio\\IdeaProjects\\ClusterNotificationBot\\src\\main\\resources\\properties.yaml";
+        String propertiesPath = args[0];
         InputStream inputStream = new FileInputStream(new File(propertiesPath));
         Yaml yaml = new Yaml();
         Map<String, Object> data = yaml.load(inputStream);
 
         MosquittoInstance mosquittoInstance = null;
         CyclicBarrier barrier = new CyclicBarrier(2);
-        System.out.println("BARREIRA CRIADA");
         try {
             mosquittoInstance = new MosquittoInstance(
                 data.get("mosquitto.broker").toString(),
@@ -33,9 +31,7 @@ public class ClusterNotificationBot {
         "ClusterNotificationBot",
                 barrier
             );
-            System.out.println("INSTANCIA MOSQUITTO CRIADA");
             mosquittoInstance.startWaitForMessage();
-            System.out.println("JÁ ESTÁ A ESCUTAR");
 
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(new TelegramBotNotifiers(propertiesPath, mosquittoInstance, barrier));
